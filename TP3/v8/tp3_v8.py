@@ -4,37 +4,89 @@ from tkinter import messagebox
 import random
 
 # Función para generar una muestra aleatoria
+# def generar_muestra(p_no_responder, p_recordar_mensaje, p_no_recordar_mensaje,
+#                     p_definitivamente_no_recordar, p_dudoso_recordar, p_definitivamente_si_recordar,
+#                     p_definitivamente_no_no_recordar, p_dudoso_no_recordar, p_definitivamente_si_no_recordar):
+#     # Simular si el individuo responde o no
+#     random_resp = round(random.random(),4)
+#     responde =  random_resp > p_no_responder
+
+#     if responde:
+#         # Simular si el individuo recuerda el mensaje
+#         recuerda_mensaje = random_resp < p_recordar_mensaje + p_no_responder
+
+#         # Simular la respuesta a la pregunta de compra
+#         if recuerda_mensaje:
+#             p_definitivamente_si = p_definitivamente_si_recordar
+#             p_dudoso = p_dudoso_recordar
+#             p_definitivamente_no = p_definitivamente_no_recordar
+#         else:
+#             p_definitivamente_si = p_definitivamente_si_no_recordar
+#             p_dudoso = p_dudoso_no_recordar
+#             p_definitivamente_no = p_definitivamente_no_no_recordar
+
+#         # Generar una muestra aleatoria de la respuesta
+#         random_muestra = round(random.random(),4)
+#         if random_muestra < p_definitivamente_si:
+#             return 1, 0, 0, 0,random_resp,"Definitivamente sí",random_muestra  # Definitivamente sí
+#         elif random_muestra < p_definitivamente_si + p_dudoso:
+#             return 0, 1, 0, 0,random_resp,random_muestra   # Dudoso
+#         else:
+#             return 0, 0, 1, 0,random_resp,random_muestra   # Definitivamente no
+#     else:
+#         return 0, 0, 0, 1,random_resp,"Se negó a responder","-"  # No responde, no se crea el segundo random
+
 def generar_muestra(p_no_responder, p_recordar_mensaje, p_no_recordar_mensaje,
                     p_definitivamente_no_recordar, p_dudoso_recordar, p_definitivamente_si_recordar,
                     p_definitivamente_no_no_recordar, p_dudoso_no_recordar, p_definitivamente_si_no_recordar):
     # Simular si el individuo responde o no
-    random_resp = random.random()
+    random_resp = round(random.random(),4)
+    if random_resp == 1:
+        random_resp -= 0.0001
+
     responde =  random_resp > p_no_responder
+    
+    # Variable auxiliar para saber que string devolver segun recuerda o no
+    recuerda_mensaje_resultado = ""
+    #Se niega a responder el mensaje, se corta la simulacion
+    if responde == False:
+        return 0,0,0,1,random_resp,"Se nego a responder","-","-"
+    #Saber si el individuo recuerda o no el mensaje
+    recuerda_mensaje = random_resp < p_recordar_mensaje + p_no_responder
+    #Si lo recuerda por lo que las probabilidades se van a basar en eso
+    if recuerda_mensaje:
+        p_definitivamente_si = p_definitivamente_si_recordar
+        p_dudoso = p_dudoso_recordar
+        p_definitivamente_no = p_definitivamente_no_recordar
+        recuerda_mensaje_resultado = "Recuerda el mensaje"
 
-    if responde:
-        # Simular si el individuo recuerda el mensaje
-        recuerda_mensaje = random_resp < p_recordar_mensaje
-
-        # Simular la respuesta a la pregunta de compra
-        if recuerda_mensaje:
-            p_definitivamente_si = p_definitivamente_si_recordar
-            p_dudoso = p_dudoso_recordar
-            p_definitivamente_no = p_definitivamente_no_recordar
-        else:
-            p_definitivamente_si = p_definitivamente_si_no_recordar
-            p_dudoso = p_dudoso_no_recordar
-            p_definitivamente_no = p_definitivamente_no_no_recordar
-
-        # Generar una muestra aleatoria de la respuesta
-        muestra = random.random()
-        if muestra < p_definitivamente_si:
-            return 1, 0, 0, 0  # Definitivamente sí
-        elif muestra < p_definitivamente_si + p_dudoso:
-            return 0, 1, 0, 0  # Dudoso
-        else:
-            return 0, 0, 1, 0  # Definitivamente no
     else:
-        return 0, 0, 0, 1  # No responde
+        p_definitivamente_si = p_definitivamente_si_no_recordar
+        p_dudoso = p_dudoso_no_recordar
+        p_definitivamente_no = p_definitivamente_no_no_recordar
+        recuerda_mensaje_resultado = "No recuerda el mensaje"  
+
+    #Con las probabilidades ajustadas entonces pasamos a ver si compraria el producto o no
+    random_muestra = round(random.random(),4)
+    if random_muestra == 1:
+        random_muestra -= 0.0001
+    #Definitivamente no
+    if random_muestra < p_definitivamente_no:
+        return 0,0,1,0,random_resp,recuerda_mensaje_resultado,random_muestra,"Definitivamente no"
+    #Dudoso
+    elif random_muestra < p_definitivamente_no + p_dudoso:
+        return 0,1,0,0,random_resp,recuerda_mensaje_resultado,random_muestra,"Dudoso"
+    #Definitivamente si
+    else:
+        return 1,0,0,0,random_resp,recuerda_mensaje_resultado,random_muestra,"Definitivamente si"
+    
+
+
+
+    
+
+
+
 
 # Función para realizar la simulación de Monte Carlo
 def simulacion_monte_carlo(n, tiempo_simulado, inicio_iteraciones, p_no_responder, p_recordar_mensaje, p_no_recordar_mensaje,
@@ -52,40 +104,46 @@ def simulacion_monte_carlo(n, tiempo_simulado, inicio_iteraciones, p_no_responde
     # Iniciar simulación
     for i in range(1, n + 1):  # Empezar desde 1 y sumar 1 al total para obtener 100 iteraciones exactas
         # Generar muestra
-        muestra = generar_muestra(p_no_responder, p_recordar_mensaje, p_no_recordar_mensaje,
+        muestra = generar_muestra(p_no_responder,p_recordar_mensaje, p_no_recordar_mensaje,
                                    p_definitivamente_no_recordar, p_dudoso_recordar, p_definitivamente_si_recordar,
                                    p_definitivamente_no_no_recordar, p_dudoso_no_recordar, p_definitivamente_si_no_recordar)
-        
+
         # Actualizar acumuladores
         contador_definitivamente_si += muestra[0]
         contador_dudoso += muestra[1]
         contador_definitivamente_no += muestra[2]
         contador_no_responde += muestra[3]
+        random_resp = muestra[4]
+        random_resp_string = muestra[5]
+        random_muestra = muestra[6]
+        random_muestra_string = muestra[7]
+        
 
-        # Actualizar vector de estado
+        # Actualizar vector de estado -> Se saco el tiempo simulado
         if i >= inicio_iteraciones and i % tiempo_simulado == 0:
             probabilidad_acumulada = contador_definitivamente_si / (contador_definitivamente_si + contador_dudoso + contador_definitivamente_no + contador_no_responde)
-            vector_estado.append((i, contador_definitivamente_si, contador_dudoso, contador_definitivamente_no, contador_no_responde, probabilidad_acumulada))
+            vector_estado.append((i,random_resp,random_resp_string,random_muestra,random_muestra_string, contador_definitivamente_si, contador_dudoso, contador_definitivamente_no, contador_no_responde, probabilidad_acumulada))
 
     return vector_estado
 
 # Función para mostrar el vector de estado
 def mostrar_vector_estado(vector_estado):
     output = "Vector de estado:\n\n"
-    output += "{:<15} {:<20} {:<15} {:<20} {:<15} {:<25}\n".format("Iteración", "Definitivamente Sí", "Dudoso", "Definitivamente No", "No Responde", "P(x) AC")
+    output += "{:<15} {:<20} {:<25} {:<25} {:<25} {:<20} {:<15} {:<20} {:<15} {:<25}\n".format("Iteración","Rnd responde","Respuesta","Rnd Compra","Compra", "Definitivamente Sí", "Dudoso", "Definitivamente No", "No Responde", "P(x) AC")
+
     for estado in vector_estado:
-        iteracion, definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada = estado
+        iteracion,random_resp,random_resp_string,random_muestra,random_muestra_string,definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada = estado
         probabilidad_acumulada = round(probabilidad_acumulada, 2)  # Redondear la probabilidad a dos decimales
-        output += "{:<15} {:<20} {:<15} {:<20} {:<15} {:<25.2f}\n".format(iteracion, definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada)
+        output += "{:<15} {:<20} {:<25} {:<25} {:<25} {:<20} {:<15} {:<20} {:<15} {:<25}\n".format(iteracion,random_resp,random_resp_string,random_muestra,random_muestra_string,definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada)
     return output
 
 # Función para mostrar la última fila
 def mostrar_ultima_fila(acumuladores):
     output = "\nÚltima fila simulada:\n\n"
-    output += "{:<15} {:<20} {:<15} {:<20} {:<15} {:<25}\n".format("Iteración", "Definitivamente Sí", "Dudoso", "Definitivamente No", "No Responde", "P(x) AC")
-    iteracion, definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada = acumuladores
+    output += "{:<15} {:<20} {:<25} {:<25} {:<25} {:<20} {:<15} {:<20} {:<15} {:<25}\n".format("Iteración","Rnd responde","Respuesta","Rnd Compra","Compra", "Definitivamente Sí", "Dudoso", "Definitivamente No", "No Responde", "P(x) AC")
+    iteracion,random_resp,random_resp_string,random_muestra,random_muestra_string,definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada = acumuladores
     probabilidad_acumulada = round(probabilidad_acumulada, 2)  # Redondear la probabilidad a dos decimales
-    output += "{:<15} {:<20} {:<15} {:<20} {:<15} {:<25.2f}\n".format(iteracion, definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada)
+    output += "{:<15} {:<20} {:<25} {:<25} {:<25} {:<20} {:<15} {:<20} {:<15} {:<25}\n".format(iteracion,random_resp,random_resp_string,random_muestra,random_muestra_string,definitivamente_si, dudoso, definitivamente_no, no_responde, probabilidad_acumulada)
     return output
 
 
@@ -99,11 +157,15 @@ def realizar_simulacion(tiempo_simulado, inicio_iteraciones, p_no_responder, p_r
                                                p_definitivamente_no_recordar, p_dudoso_recordar,
                                                p_definitivamente_si_recordar, p_definitivamente_no_no_recordar,
                                                p_dudoso_no_recordar, p_definitivamente_si_no_recordar)
-        resultado_text.delete(1.0, tk.END)
-        resultado_text.insert(tk.END, mostrar_vector_estado(vector_estado))
-        resultado_text.insert(tk.END, mostrar_ultima_fila(vector_estado[-1]))
+        if vector_estado is not None and len(vector_estado) > 0:
+            resultado_text.delete(1.0, tk.END)
+            resultado_text.insert(tk.END, mostrar_vector_estado(vector_estado))
+            resultado_text.insert(tk.END, mostrar_ultima_fila(vector_estado[-1]))
+        else:
+            messagebox.showerror("Error", "La simulación no pudo realizarse correctamente.")
     except Exception as e:
         messagebox.showerror("Error", f"Ocurrió un error durante la simulación: {str(e)}")
+
 
 # Función para cargar valores predefinidos
 def cargar_valores_predefinidos():
