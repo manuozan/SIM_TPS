@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import json
 
 def create_table(root):
     headers = [
@@ -34,6 +35,12 @@ def create_table(root):
         ('Inicialización', '0', '0.51', '9.27', '9.27', '', '', '', '', '', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', '0', '0', '0', '0', '0'),
         ('llegada_auto (1)', '9.27', '0.28', '4.27', '13.54', '0.36', 'pequeño', '0.62', '120', '129.27', '1 - 129.27', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Libre', 'Ocupado', '0', '0', '0', '1', '0'),
     ]
+    """with open('estado_simulacion.json') as estado: 
+        data = json.load(estado, ensure_ascii=False, indent=4)"""
+    
+    
+    
+
     
     for row in data:
         tree.insert('', 'end', values=row)
@@ -51,7 +58,7 @@ def create_table(root):
     
     return tree
 
-def open_table():
+def open_table():    
     table_window = tk.Toplevel()
     table_window.title('Tabla con Scrollbars')
     table_window.state('zoomed')

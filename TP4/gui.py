@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from logic import open_table
 
+
 root = tk.Tk()
 root.title('TP4')
 root.resizable(False, False)

@@ -1,22 +1,25 @@
 import random
 import queue
-import heapq
+import json
+import tkinter as tk
+from tkinter import ttk
+from logic import open_table
 
 # Parámetros de la simulación
 NUM_SECTORES = 8
 TIEMPO_ENTRE_LLEGADAS = 13  # minutos
-DURACION_SIMULACION = 3 * 60  # minutos (3 horas)
+DURACION_SIMULACION = 1 * 60 # minutos (1 hora)
 
 # Costos de estacionamiento por tipo de auto
 COSTO_POR_HORA = {
-    'pequeño': 300,
+    'small': 300,
     'grande': 500,
     'utilitario': 1000
 }
 
 # Probabilidades de tipo de auto
 PROBABILIDADES_TIPO = {
-    'pequeño': 0.45,
+    'small': 0.45,
     'grande': 0.25,
     'utilitario': 0.30
 }
@@ -55,36 +58,59 @@ class PlayaDeEstacionamiento:
         self.tiempo_espera_cobro_total = 0
         self.autos_atendidos = 0
         self.autos_rechazados = 0
+        self.vector_estado = []
 
     def agregar_evento(self, tiempo, tipo_evento, auto=None, sector=None):
-        heapq.heappush(self.eventos, (tiempo, tipo_evento, auto, sector))
+        self.eventos.append((tiempo, tipo_evento, auto, sector))
+        self.eventos.sort()
 
-    def mostrar_vector_estado(self, tiempo, tipo_evento, auto, sector):
-        evento_auto = auto.id if auto else "N/A"
-        print("Hora simulada:", tiempo)
-        print("Evento simulado:", tipo_evento, f"({evento_auto})")
-        print("Próximos eventos:")
-        for evento in self.eventos:
-            evento_auto = evento[2].id if evento[2] else "N/A"
-            print(f"\tTiempo: {evento[0]} , Tipo: {evento[1]}, Auto: {evento_auto}, Sector: {evento[3]}")
-  
-        print("Sectores:")
-        for i, sector_auto in enumerate(self.sectores):
-            if sector_auto:
-                print(f"\tSector {i+1}: Tipo: {sector_auto.tipo}, Llegada: {sector_auto.tiempo_llegada}, Estac.: {sector_auto.tiempo_estacionamiento}")
-            else:
-                print(f"\tSector {i+1}: Vacío")
+    def mostrar_vector_estado(self, tiempo, tipo_evento, auto, sector,datos_random):
+        estado = {
+            "tiempo": tiempo,
+            "tipo_evento": tipo_evento,
+            "auto_actual":datos_random,
+            "sectores": [(i + 1, sector_auto.tipo if sector_auto else "Vacio") for i, sector_auto in enumerate(self.sectores)],
+            "cola_cobro": list(self.cola_cobro.queue),
+            "eventos": [(evento[0], evento[1], evento[2].id if evento[2] else "N/A", evento[3]) for evento in self.eventos],
+            "recaudacion_total": self.recaudacion_total,
+            "autos_atendidos": self.autos_atendidos,
+            "autos_rechazados": self.autos_rechazados
+        }
+        self.vector_estado.append(estado)
+        
+        # Escribir estado en un archivo JSON
+        with open("estado_simulacion.json", "w") as file:
+            json.dump(self.vector_estado, file, indent=4)
+        
 
-        print("Recaudación total:", self.recaudacion_total)
-        print("Autos atendidos:", self.autos_atendidos)
-        print("Autos rechazados:", self.autos_rechazados)
-        print("-" * 50)
+    def seleccionar_tipo_auto(self):
+        rnd_tipo = round(random.random(),4)
+        if rnd_tipo == 1:
+            rnd_tipo -= 0.001
+        cumulative_probability = 0.0
+        for tipo, probabilidad in PROBABILIDADES_TIPO.items():
+            cumulative_probability += probabilidad
+            if rnd_tipo <= cumulative_probability:
+                return tipo, rnd_tipo
 
+    def seleccionar_tiempo_estacionamiento(self):
+        rnd_tiempo = round(random.random(),4)
+        if rnd_tiempo == 1:
+            rnd_tiempo -= 0.001
+        cumulative_probability = 0.0
+        for tiempo, probabilidad in PROBABILIDADES_TIEMPO.items():
+            cumulative_probability += probabilidad
+            if rnd_tiempo <= cumulative_probability:
+                return tiempo, rnd_tiempo   
+              
     def llegada_auto(self, tiempo):
-        tipo_auto = random.choices(list(PROBABILIDADES_TIPO.keys()), list(PROBABILIDADES_TIPO.values()))[0]
-        tiempo_estacionamiento = random.choices(list(PROBABILIDADES_TIEMPO.keys()), list(PROBABILIDADES_TIEMPO.values()))[0]
+        tipo_auto, rnd_tipo = self.seleccionar_tipo_auto()
+        tiempo_estacionamiento, rnd_tiempo = self.seleccionar_tiempo_estacionamiento()
         auto = Auto(tipo_auto, tiempo_estacionamiento)
         auto.tiempo_llegada = tiempo
+
+        #datos para el vector estado
+        datos_randoms_actual = [rnd_tipo,tipo_auto,rnd_tiempo,tiempo_estacionamiento]        
 
         # Buscar un sector vacío
         sector_vacio = None
@@ -103,7 +129,7 @@ class PlayaDeEstacionamiento:
         self.agregar_evento(tiempo + TIEMPO_ENTRE_LLEGADAS, 'llegada_auto')
 
         # Mostrar el vector de estado después de cada llegada de auto
-        self.mostrar_vector_estado(tiempo, 'llegada_auto', auto, sector_vacio)
+        self.mostrar_vector_estado(tiempo, 'llegada_auto', auto, sector_vacio,datos_randoms_actual)
 
     def salida_auto(self, tiempo, auto, sector):
         if not self.cola_cobro.full():
@@ -133,7 +159,7 @@ class PlayaDeEstacionamiento:
         self.agregar_evento(0, 'llegada_auto')
 
         while self.eventos:
-            tiempo, tipo_evento, auto, sector = heapq.heappop(self.eventos)
+            tiempo, tipo_evento, auto, sector = self.eventos.pop(0)
             if tiempo > DURACION_SIMULACION:
                 break
             if tipo_evento == 'llegada_auto':
@@ -155,8 +181,4 @@ class PlayaDeEstacionamiento:
 
 if __name__ == "__main__":
     playa = PlayaDeEstacionamiento()
-    resultados = playa.ejecutar_simulacion()
-
-    print("Recaudación Total: $", resultados["recaudacion_total"])
-    print("Porcentaje de Utilización de la Playa: {:.2f}%".format(resultados["porcentaje_utilizacion"]))
-    print("Promedio de Tiempo de Espera por el Cobro: {:.2f} minutos".format(resultados["tiempo_promedio_espera_cobro"]))
+    playa.ejecutar_simulacion()

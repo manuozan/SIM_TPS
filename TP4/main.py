@@ -1,10 +1,11 @@
 import random
 import queue
+import json
 
 # Parámetros de la simulación
 NUM_SECTORES = 8
 TIEMPO_ENTRE_LLEGADAS = 13  # minutos
-DURACION_SIMULACION = 1 * 60  # minutos (8 horas)
+DURACION_SIMULACION = 13 # minutos (8 horas)
 
 # Costos de estacionamiento por tipo de auto
 COSTO_POR_HORA = {
@@ -61,13 +62,20 @@ class PlayaDeEstacionamiento:
 
     def mostrar_vector_estado(self, tiempo, tipo_evento, auto, sector):
         evento_auto = auto.id if auto else "N/A"
+
+        vector_estado = [tiempo,tipo_evento,self.sectores,self.eventos[0],self.recaudacion_total,self.autos_atendidos,self.autos_rechazados]
+        # vector_estado = [tiempo,tipo_evento,self.sectores,self.cola_cobro,self.eventos[0] -> prox evento,self.sectores,self.recaudacion_total,self.autos_atendidos,self.autos_rechazados]
+        print(vector_estado)
+        #with open('vector_Estado.json', 'w') as jf: 
+        #   json.dump(vector_estado, jf, ensure_ascii=False, indent=2)
+
         print("Hora simulada:", tiempo)
         print("Evento simulado:", tipo_evento, f"({evento_auto})")
         print("Próximos eventos:")
         for evento in self.eventos:
             evento_auto = evento[2].id if evento[2] else "N/A"
             print(f"\tTiempo: {evento[0]} , Tipo: {evento[1]}, Auto: {evento_auto}, Sector: {evento[3]}")
-  
+
 
         print("Sectores:")
         for i, sector_auto in enumerate(self.sectores):

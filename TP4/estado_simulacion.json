@@ -1,0 +1,372 @@
+[
+    {
+        "tiempo": 0,
+        "tipo_evento": "llegada_auto",
+        "auto_actual": [
+            0.827,
+            "utilitario",
+            0.9881,
+            240
+        ],
+        "sectores": [
+            [
+                1,
+                "utilitario"
+            ],
+            [
+                2,
+                "Vacio"
+            ],
+            [
+                3,
+                "Vacio"
+            ],
+            [
+                4,
+                "Vacio"
+            ],
+            [
+                5,
+                "Vacio"
+            ],
+            [
+                6,
+                "Vacio"
+            ],
+            [
+                7,
+                "Vacio"
+            ],
+            [
+                8,
+                "Vacio"
+            ]
+        ],
+        "cola_cobro": [],
+        "eventos": [
+            [
+                13,
+                "llegada_auto",
+                "N/A",
+                null
+            ],
+            [
+                240,
+                "salida_auto",
+                1,
+                0
+            ]
+        ],
+        "recaudacion_total": 0,
+        "autos_atendidos": 0,
+        "autos_rechazados": 0
+    },
+    {
+        "tiempo": 13,
+        "tipo_evento": "llegada_auto",
+        "auto_actual": [
+            0.5137,
+            "grande",
+            0.0763,
+            60
+        ],
+        "sectores": [
+            [
+                1,
+                "utilitario"
+            ],
+            [
+                2,
+                "grande"
+            ],
+            [
+                3,
+                "Vacio"
+            ],
+            [
+                4,
+                "Vacio"
+            ],
+            [
+                5,
+                "Vacio"
+            ],
+            [
+                6,
+                "Vacio"
+            ],
+            [
+                7,
+                "Vacio"
+            ],
+            [
+                8,
+                "Vacio"
+            ]
+        ],
+        "cola_cobro": [],
+        "eventos": [
+            [
+                26,
+                "llegada_auto",
+                "N/A",
+                null
+            ],
+            [
+                73,
+                "salida_auto",
+                2,
+                1
+            ],
+            [
+                240,
+                "salida_auto",
+                1,
+                0
+            ]
+        ],
+        "recaudacion_total": 0,
+        "autos_atendidos": 0,
+        "autos_rechazados": 0
+    },
+    {
+        "tiempo": 26,
+        "tipo_evento": "llegada_auto",
+        "auto_actual": [
+            0.877,
+            "utilitario",
+            0.0035,
+            60
+        ],
+        "sectores": [
+            [
+                1,
+                "utilitario"
+            ],
+            [
+                2,
+                "grande"
+            ],
+            [
+                3,
+                "utilitario"
+            ],
+            [
+                4,
+                "Vacio"
+            ],
+            [
+                5,
+                "Vacio"
+            ],
+            [
+                6,
+                "Vacio"
+            ],
+            [
+                7,
+                "Vacio"
+            ],
+            [
+                8,
+                "Vacio"
+            ]
+        ],
+        "cola_cobro": [],
+        "eventos": [
+            [
+                39,
+                "llegada_auto",
+                "N/A",
+                null
+            ],
+            [
+                73,
+                "salida_auto",
+                2,
+                1
+            ],
+            [
+                86,
+                "salida_auto",
+                3,
+                2
+            ],
+            [
+                240,
+                "salida_auto",
+                1,
+                0
+            ]
+        ],
+        "recaudacion_total": 0,
+        "autos_atendidos": 0,
+        "autos_rechazados": 0
+    },
+    {
+        "tiempo": 39,
+        "tipo_evento": "llegada_auto",
+        "auto_actual": [
+            0.5688,
+            "grande",
+            0.4024,
+            60
+        ],
+        "sectores": [
+            [
+                1,
+                "utilitario"
+            ],
+            [
+                2,
+                "grande"
+            ],
+            [
+                3,
+                "utilitario"
+            ],
+            [
+                4,
+                "grande"
+            ],
+            [
+                5,
+                "Vacio"
+            ],
+            [
+                6,
+                "Vacio"
+            ],
+            [
+                7,
+                "Vacio"
+            ],
+            [
+                8,
+                "Vacio"
+            ]
+        ],
+        "cola_cobro": [],
+        "eventos": [
+            [
+                52,
+                "llegada_auto",
+                "N/A",
+                null
+            ],
+            [
+                73,
+                "salida_auto",
+                2,
+                1
+            ],
+            [
+                86,
+                "salida_auto",
+                3,
+                2
+            ],
+            [
+                99,
+                "salida_auto",
+                4,
+                3
+            ],
+            [
+                240,
+                "salida_auto",
+                1,
+                0
+            ]
+        ],
+        "recaudacion_total": 0,
+        "autos_atendidos": 0,
+        "autos_rechazados": 0
+    },
+    {
+        "tiempo": 52,
+        "tipo_evento": "llegada_auto",
+        "auto_actual": [
+            0.7356,
+            "utilitario",
+            0.0167,
+            60
+        ],
+        "sectores": [
+            [
+                1,
+                "utilitario"
+            ],
+            [
+                2,
+                "grande"
+            ],
+            [
+                3,
+                "utilitario"
+            ],
+            [
+                4,
+                "grande"
+            ],
+            [
+                5,
+                "utilitario"
+            ],
+            [
+                6,
+                "Vacio"
+            ],
+            [
+                7,
+                "Vacio"
+            ],
+            [
+                8,
+                "Vacio"
+            ]
+        ],
+        "cola_cobro": [],
+        "eventos": [
+            [
+                65,
+                "llegada_auto",
+                "N/A",
+                null
+            ],
+            [
+                73,
+                "salida_auto",
+                2,
+                1
+            ],
+            [
+                86,
+                "salida_auto",
+                3,
+                2
+            ],
+            [
+                99,
+                "salida_auto",
+                4,
+                3
+            ],
+            [
+                112,
+                "salida_auto",
+                5,
+                4
+            ],
+            [
+                240,
+                "salida_auto",
+                1,
+                0
+            ]
+        ],
+        "recaudacion_total": 0,
+        "autos_atendidos": 0,
+        "autos_rechazados": 0
+    }
+]
