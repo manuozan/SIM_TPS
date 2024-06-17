@@ -73,7 +73,7 @@ class PlayaDeEstacionamiento:
             "tiempo": tiempo,
             "tipo_evento": tipo_evento,
             "auto_actual":datos_random or "No llego un auto",
-            "sectores": [(f"Lugar:{i + 1}", f"{sector_auto.__repr__()}" if sector_auto else "Vacio") for i, sector_auto in enumerate(self.sectores)],
+            "sectores": [(f"Lugar:{i + 1}", f"{sector_auto.__repr__()}" if sector_auto else "Libre") for i, sector_auto in enumerate(self.sectores)],
             "cola_cobro": self.cola_cobro.qsize(),
             "eventos": [(evento[0], evento[1], evento[2].id if evento[2] else "N/A", evento[3]) for evento in self.eventos],
             "recaudacion_total": self.recaudacion_total,
