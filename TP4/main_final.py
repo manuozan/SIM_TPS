@@ -8,7 +8,7 @@ from logic import open_table
 # Parámetros de la simulación
 NUM_SECTORES = 8
 TIEMPO_ENTRE_LLEGADAS = 13  # minutos
-DURACION_SIMULACION = 1 * 60 # minutos (1 hora)
+DURACION_SIMULACION = 8 * 60 # minutos (1 hora)
 
 # Costos de estacionamiento por tipo de auto
 COSTO_POR_HORA = {
@@ -35,18 +35,19 @@ PROBABILIDADES_TIEMPO = {
 class Auto:
     _id_counter = 1
 
-    def __init__(self, tipo, tiempo_estacionamiento):
+    def __init__(self, tipo, tiempo_estacionamiento,estado=None):
         self.id = Auto._id_counter
         Auto._id_counter += 1
         self.tipo = tipo
         self.tiempo_estacionamiento = tiempo_estacionamiento
+        self.estado = estado
         self.tiempo_llegada = None
         self.tiempo_salida = None
         self.tiempo_inicio_cobro = None
         self.tiempo_espera_cobro = None
 
     def __repr__(self):
-        return f"Auto {self.id} (Tipo: {self.tipo})"
+        return f"Auto {self.id} (Tipo: {self.tipo}, Estado: {self.estado})"
 
 class PlayaDeEstacionamiento:
     def __init__(self):
@@ -65,16 +66,22 @@ class PlayaDeEstacionamiento:
         self.eventos.sort()
 
     def mostrar_vector_estado(self, tiempo, tipo_evento, auto, sector,datos_random):
+
+        porcentaje_utilizacion = sum(self.tiempo_uso_sectores) / (NUM_SECTORES * DURACION_SIMULACION) * 100
+        tiempo_promedio_espera_cobro = self.tiempo_espera_cobro_total / self.autos_atendidos if self.autos_atendidos > 0 else 0
         estado = {
             "tiempo": tiempo,
             "tipo_evento": tipo_evento,
-            "auto_actual":datos_random,
-            "sectores": [(i + 1, sector_auto.tipo if sector_auto else "Vacio") for i, sector_auto in enumerate(self.sectores)],
-            "cola_cobro": list(self.cola_cobro.queue),
+            "auto_actual":datos_random or "No llego un auto",
+            "sectores": [(f"Lugar:{i + 1}", f"{sector_auto.__repr__()}" if sector_auto else "Vacio") for i, sector_auto in enumerate(self.sectores)],
+            "cola_cobro": self.cola_cobro.qsize(),
             "eventos": [(evento[0], evento[1], evento[2].id if evento[2] else "N/A", evento[3]) for evento in self.eventos],
             "recaudacion_total": self.recaudacion_total,
             "autos_atendidos": self.autos_atendidos,
-            "autos_rechazados": self.autos_rechazados
+            "autos_rechazados": self.autos_rechazados,
+            "porcentaje_utilizacion":porcentaje_utilizacion,
+            "tiempo_promedio_espera":tiempo_promedio_espera_cobro,
+            
         }
         self.vector_estado.append(estado)
         
@@ -106,7 +113,7 @@ class PlayaDeEstacionamiento:
     def llegada_auto(self, tiempo):
         tipo_auto, rnd_tipo = self.seleccionar_tipo_auto()
         tiempo_estacionamiento, rnd_tiempo = self.seleccionar_tiempo_estacionamiento()
-        auto = Auto(tipo_auto, tiempo_estacionamiento)
+        auto = Auto(tipo_auto, tiempo_estacionamiento,estado="Estacionado")
         auto.tiempo_llegada = tiempo
 
         #datos para el vector estado
@@ -134,12 +141,13 @@ class PlayaDeEstacionamiento:
     def salida_auto(self, tiempo, auto, sector):
         if not self.cola_cobro.full():
             auto.tiempo_inicio_cobro = tiempo
+            auto.estado = "Pagando"
             self.cola_cobro.put(auto)
             self.agregar_evento(tiempo + 2, 'fin_cobro', auto, sector)
         else:
             self.agregar_evento(tiempo + 1, 'salida_auto', auto, sector)
 
-        self.mostrar_vector_estado(tiempo, 'salida_auto', auto, sector)
+        self.mostrar_vector_estado(tiempo, 'salida_auto', auto, sector,None)
 
     def fin_cobro(self, tiempo, auto, sector):
         self.sectores[sector] = None
@@ -149,7 +157,7 @@ class PlayaDeEstacionamiento:
         self.tiempo_espera_cobro_total += auto.tiempo_espera_cobro
         self.autos_atendidos += 1
 
-        self.mostrar_vector_estado(tiempo, 'fin_cobro', auto, sector)
+        self.mostrar_vector_estado(tiempo, 'fin_cobro', auto, sector,None)
 
         if not self.cola_cobro.empty():
             siguiente_auto = self.cola_cobro.get()
@@ -182,3 +190,4 @@ class PlayaDeEstacionamiento:
 if __name__ == "__main__":
     playa = PlayaDeEstacionamiento()
     playa.ejecutar_simulacion()
+
