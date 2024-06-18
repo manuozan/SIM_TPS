@@ -4,6 +4,7 @@ import json
 import tkinter as tk
 from tkinter import ttk
 from logic import open_table
+import math
 
 # Parámetros de la simulación
 NUM_SECTORES = 8
@@ -63,7 +64,7 @@ class PlayaDeEstacionamiento:
 
     def agregar_evento(self, tiempo, tipo_evento, auto=None, sector=None):
         self.eventos.append((tiempo, tipo_evento, auto, sector))
-        self.eventos.sort()
+        self.eventos.sort(key=lambda x: x[0])
 
     def mostrar_vector_estado(self, tiempo, tipo_evento, auto, sector,datos_random):
 
@@ -72,10 +73,11 @@ class PlayaDeEstacionamiento:
         estado = {
             "tiempo": tiempo,
             "tipo_evento": tipo_evento,
-            "auto_actual":datos_random or "No llego un auto",
+            "auto_actual": datos_random[:4] if datos_random and len(datos_random) >= 4 else "No llegó un auto",
+            "proxima_llegada": datos_random[4:7] if datos_random and len(datos_random) >= 7 else "No llega otro auto",
             "sectores": [(f"Lugar:{i + 1}", f"{sector_auto.__repr__()}" if sector_auto else "Libre") for i, sector_auto in enumerate(self.sectores)],
             "cola_cobro": self.cola_cobro.qsize(),
-            "eventos": [(evento[0], evento[1], evento[2].id if evento[2] else "N/A", evento[3]) for evento in self.eventos],
+            "proximos_eventos": [(evento[0], evento[1], evento[2].id if evento[2] else "N/A", evento[3]) for evento in self.eventos],
             "recaudacion_total": self.recaudacion_total,
             "autos_atendidos": self.autos_atendidos,
             "autos_rechazados": self.autos_rechazados,
@@ -109,7 +111,16 @@ class PlayaDeEstacionamiento:
             cumulative_probability += probabilidad
             if rnd_tiempo <= cumulative_probability:
                 return tiempo, rnd_tiempo   
-              
+    def proximo_auto(self):
+        rnd_prox = random.random()
+        if rnd_prox == 1:
+            rnd_prox -= 0.001
+        tiempo_entre_llegada = int(round(-TIEMPO_ENTRE_LLEGADAS * math.log(1 - rnd_prox),0))
+
+        return rnd_prox, tiempo_entre_llegada
+
+
+
     def llegada_auto(self, tiempo):
         tipo_auto, rnd_tipo = self.seleccionar_tipo_auto()
         tiempo_estacionamiento, rnd_tiempo = self.seleccionar_tiempo_estacionamiento()
@@ -133,7 +144,9 @@ class PlayaDeEstacionamiento:
             self.autos_rechazados += 1
 
         # Agregar el próximo evento de llegada de auto
-        self.agregar_evento(tiempo + TIEMPO_ENTRE_LLEGADAS, 'llegada_auto')
+        rnd_prox_llegada , tiempo_entre_llegada = self.proximo_auto()
+        datos_randoms_actual.extend([rnd_prox_llegada , tiempo_entre_llegada,tiempo + tiempo_entre_llegada])
+        self.agregar_evento(tiempo + tiempo_entre_llegada, 'llegada_auto')
 
         # Mostrar el vector de estado después de cada llegada de auto
         self.mostrar_vector_estado(tiempo, 'llegada_auto', auto, sector_vacio,datos_randoms_actual)
@@ -169,6 +182,7 @@ class PlayaDeEstacionamiento:
         while self.eventos:
             tiempo, tipo_evento, auto, sector = self.eventos.pop(0)
             if tiempo > DURACION_SIMULACION:
+                self.mostrar_vector_estado(tiempo,tipo_evento,auto,sector,None)
                 break
             if tipo_evento == 'llegada_auto':
                 self.llegada_auto(tiempo)
@@ -177,15 +191,7 @@ class PlayaDeEstacionamiento:
             elif tipo_evento == 'fin_cobro':
                 self.fin_cobro(tiempo, auto, sector)
 
-        # Calcular métricas finales
-        porcentaje_utilizacion = sum(self.tiempo_uso_sectores) / (NUM_SECTORES * DURACION_SIMULACION) * 100
-        tiempo_promedio_espera_cobro = self.tiempo_espera_cobro_total / self.autos_atendidos if self.autos_atendidos > 0 else 0
-
-        return {
-            "recaudacion_total": self.recaudacion_total,
-            "porcentaje_utilizacion": porcentaje_utilizacion,
-            "tiempo_promedio_espera_cobro": tiempo_promedio_espera_cobro
-        }
+       
 
 if __name__ == "__main__":
     playa = PlayaDeEstacionamiento()
