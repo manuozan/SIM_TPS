@@ -79,14 +79,20 @@ class PlayaDeEstacionamiento:
         
 
     def seleccionar_tipo_auto(self):
-        rnd_tipo = round(random.random(),4)
+               
+        rnd_tipo = random.random()
         if rnd_tipo == 1:
             rnd_tipo -= 0.001
-        cumulative_probability = 0.0
-        for tipo, probabilidad in self.probabilidades_tipo.items():
-            cumulative_probability += probabilidad
-            if rnd_tipo <= cumulative_probability:
-                return tipo, rnd_tipo
+        probabilidad_acum = 0.0
+        for tipo, probabilidad in self.probabilidades_tipo:
+            probabilidad_acum += probabilidad
+            if rnd_tipo <= probabilidad_acum:
+                return rnd_tipo, tipo
+            
+        
+
+
+
 
     def seleccionar_tiempo_estacionamiento(self):
         rnd_tiempo = round(random.random(),4)
@@ -97,6 +103,7 @@ class PlayaDeEstacionamiento:
             cumulative_probability += probabilidad
             if rnd_tiempo <= cumulative_probability:
                 return tiempo, rnd_tiempo   
+            
     def proximo_auto(self):
         rnd_prox = round(random.random(),4)
         if rnd_prox == 1:
@@ -108,7 +115,7 @@ class PlayaDeEstacionamiento:
 
 
     def llegada_auto(self, tiempo):
-        tipo_auto, rnd_tipo = self.seleccionar_tipo_auto()
+        rnd_tipo,tipo_auto = self.seleccionar_tipo_auto()
         tiempo_estacionamiento, rnd_tiempo = self.seleccionar_tiempo_estacionamiento()
         auto = Auto(tipo_auto, tiempo_estacionamiento,estado="Estacionado")
         auto.tiempo_llegada = tiempo
@@ -142,7 +149,7 @@ class PlayaDeEstacionamiento:
             auto.tiempo_inicio_cobro = tiempo
             auto.estado = "Pagando"
             self.cola_cobro.put(auto)
-            self.agregar_evento(tiempo + 2, 'fin_cobro', auto, sector)
+            self.agregar_evento(tiempo + self.cobro, 'fin_cobro', auto, sector)
         else:
             self.agregar_evento(tiempo + 1, 'salida_auto', auto, sector)
 
@@ -194,11 +201,7 @@ def iniciar_simulacion():
     auto_grande = float(auto_grande_entry.get())
     auto_utilitario = float(auto_utilitario_entry.get())
 
-    PROBABILIDADES_TIPO = {
-        'small': auto_chico,
-        'grande': auto_grande,
-        'utilitario': auto_utilitario
-    }
+    PROBABILIDADES_TIPO = [['small',auto_chico],['grande',auto_grande],['utilitario',auto_utilitario]]
 
     una_hora = float(una_hora_entry.get())
     dos_horas = float(dos_horas_entry.get())
@@ -219,6 +222,10 @@ def iniciar_simulacion():
     for row in tree.get_children():
         tree.delete(row)
 
+    print(data[0]['tiempo'])
+    if hora_inicio != 0:
+        data = [item for item in data if item['tiempo'] >= hora_inicio]
+            
     # Mostrar los datos en la tabla
     for i in range(min(iteraciones, len(data))):
         item = data[i]
@@ -409,7 +416,7 @@ if __name__ == "__main__":
 
     for col in columns:
         tree.heading(col, text=col)
-        tree.column(col, width=150)
+        tree.column(col)
 
     root.mainloop()
 
