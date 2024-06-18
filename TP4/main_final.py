@@ -3,7 +3,6 @@ import queue
 import json
 import tkinter as tk
 from tkinter import ttk
-from logic import open_table
 import math
 
 # Parámetros de la simulación
@@ -73,8 +72,8 @@ class PlayaDeEstacionamiento:
         estado = {
             "tiempo": tiempo,
             "tipo_evento": tipo_evento,
-            "auto_actual": datos_random[:4] if datos_random and len(datos_random) >= 4 else "No llegó un auto",
-            "proxima_llegada": datos_random[4:7] if datos_random and len(datos_random) >= 7 else "No llega otro auto",
+            "auto_actual": datos_random[:4] if datos_random and len(datos_random) >= 4 else "No llego un auto",
+            "proxima_llegada": datos_random[4:7] if datos_random and len(datos_random) >= 7 else "No llegara otro auto",
             "sectores": [(f"Lugar:{i + 1}", f"{sector_auto.__repr__()}" if sector_auto else "Libre") for i, sector_auto in enumerate(self.sectores)],
             "cola_cobro": self.cola_cobro.qsize(),
             "proximos_eventos": [(evento[0], evento[1], evento[2].id if evento[2] else "N/A", evento[3]) for evento in self.eventos],
@@ -191,9 +190,159 @@ class PlayaDeEstacionamiento:
             elif tipo_evento == 'fin_cobro':
                 self.fin_cobro(tiempo, auto, sector)
 
-       
-
-if __name__ == "__main__":
+# Datos de ejemplo
+def iniciar_simulacion():
     playa = PlayaDeEstacionamiento()
     playa.ejecutar_simulacion()
+
+    data = playa.vector_estado
+    # Obtener valores de los campos de entrada
+    tiempo = tiempo_entry.get()
+    iteraciones = int(iteraciones_entry.get())
+    hora_inicio = hora_inicio_entry.get()
+
+    # Limpiar la tabla
+    for row in tree.get_children():
+        tree.delete(row)
+
+    # Mostrar los datos en la tabla
+    for i in range(min(iteraciones, len(data))):
+        item = data[i]
+        auto_actual = item["auto_actual"]
+        proxima_llegada = item["proxima_llegada"]
+        sectores = item["sectores"]
+        
+        if auto_actual == "No llego un auto":
+            auto_actual_data = ['-', '-', '-', '-', True]
+        else:
+            auto_actual_data = [*auto_actual,False]
+        
+        if proxima_llegada == "No llegara otro auto":
+            proxima_llegada_data = ['-', '-', '-', True]
+        else:
+            proxima_llegada_data = [*proxima_llegada,False]
+        
+        sector_data = []
+        for sector in sectores:
+            if len(sector) == 2:
+                sector_data.append(sector[1])
+            else:
+                sector_data.append("Libre")
+        
+        tree.insert('', 'end', values=(
+            item["tiempo"],
+            item["tipo_evento"],
+            *auto_actual_data[:4], auto_actual_data[4] if len(auto_actual_data) > 4 else False,
+            *proxima_llegada_data[:3], proxima_llegada_data[3] if len(proxima_llegada_data) > 3 else False,
+            *sector_data,
+            item["cola_cobro"],
+            str(item["proximos_eventos"]),
+            item["recaudacion_total"],
+            item["autos_atendidos"],
+            item["autos_rechazados"],
+            item["porcentaje_utilizacion"],
+            item["tiempo_promedio_espera"]
+        ))
+    
+    # Agregar fila extra con el último elemento del array
+    ultima_fila = data[-1]
+    auto_actual = ultima_fila["auto_actual"]
+    proxima_llegada = ultima_fila["proxima_llegada"]
+    sectores = ultima_fila["sectores"]
+
+    if auto_actual == "No llego un auto":
+            auto_actual_data = ['-', '-', '-', '-', True]
+    else:
+            auto_actual_data = [*auto_actual,False]
+        
+    if proxima_llegada == "No llegara otro auto":
+            proxima_llegada_data = ['-', '-', '-', True]
+    else:
+            proxima_llegada_data = [*proxima_llegada,False]
+    sector_data = []
+    for sector in sectores:
+        if len(sector) == 2:
+            sector_data.append(sector[1])
+        else:
+            sector_data.append("Libre")
+        
+    tree.insert('', 'end', values=(
+        ultima_fila["tiempo"],
+        ultima_fila["tipo_evento"],
+        *auto_actual_data[:4], auto_actual_data[4] if len(auto_actual_data) > 4 else False,
+        *proxima_llegada_data[:3], proxima_llegada_data[3] if len(proxima_llegada_data) > 3 else False,
+        *sector_data,
+        ultima_fila["cola_cobro"],
+        str(ultima_fila["proximos_eventos"]),
+        ultima_fila["recaudacion_total"],
+        ultima_fila["autos_atendidos"],
+        ultima_fila["autos_rechazados"],
+        ultima_fila["porcentaje_utilizacion"],
+        ultima_fila["tiempo_promedio_espera"]
+    ), tags=('ultima',))
+    tree.tag_configure('ultima', background='lightgrey')
+
+
+if __name__ == "__main__":
+    # Crear la ventana principal
+    root = tk.Tk()
+    root.title("Simulación de Datos")
+    root.geometry("1200x800")
+
+    # Crear el frame para los campos de entrada
+    input_frame = tk.Frame(root)
+    input_frame.pack(pady=20)
+
+    # Campo de entrada para el parámetro de tiempo
+    tk.Label(input_frame, text="Parámetro de Tiempo:").grid(row=0, column=0, padx=10, pady=5)
+    tiempo_entry = tk.Entry(input_frame)
+    tiempo_entry.grid(row=0, column=1, padx=10, pady=5)
+
+    # Campo de entrada para el parámetro de iteraciones
+    tk.Label(input_frame, text="Iteraciones:").grid(row=1, column=0, padx=10, pady=5)
+    iteraciones_entry = tk.Entry(input_frame)
+    iteraciones_entry.grid(row=1, column=1, padx=10, pady=5)
+
+    # Campo de entrada para la hora de inicio
+    tk.Label(input_frame, text="Hora de Inicio:").grid(row=2, column=0, padx=10, pady=5)
+    hora_inicio_entry = tk.Entry(input_frame)
+    hora_inicio_entry.grid(row=2, column=1, padx=10, pady=5)
+
+    # Botón para iniciar la simulación
+    start_button = tk.Button(input_frame, text="Iniciar Simulación", command=iniciar_simulacion)
+    start_button.grid(row=3, column=0, columnspan=2, pady=20)
+
+    # Crear el treeview con scrollbars
+    frame = tk.Frame(root)
+    frame.pack(fill=tk.BOTH, expand=True)
+
+    columns = (
+        "Tiempo", "Tipo Evento", "RND Tamaño", "Tamaño", "RND Tiempo Estacionamiento", "Tiempo Estacionamiento", "No Llego Un Auto (Actual)",
+        "RND Próx Llegada", "Tiempo Entre Llegadas", "Próxima Llegada", "No Llega Un Auto (Próxima)",
+        "Sector 1", "Sector 2", "Sector 3", "Sector 4", "Sector 5", "Sector 6", "Sector 7", "Sector 8",
+        "Cola Cobro", "Próximos Eventos", "Recaudación Total", "Autos Atendidos", "Autos Rechazados", "Porcentaje Utilización", "Tiempo Promedio Espera"
+    )
+
+    tree = ttk.Treeview(frame, columns=columns, show="headings")
+    tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    # Scrollbar vertical
+    scrollbar_y = tk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
+    scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+    tree.configure(yscrollcommand=scrollbar_y.set)
+
+    # Scrollbar horizontal
+    scrollbar_x = tk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+    scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
+    tree.configure(xscrollcommand=scrollbar_x.set)
+
+    for col in columns:
+        tree.heading(col, text=col)
+        tree.column(col, width=150)
+
+    root.mainloop()
+
+        
+
+
 
