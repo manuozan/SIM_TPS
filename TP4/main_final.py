@@ -7,8 +7,6 @@ import math
 
 # Parámetros de la simulación
 NUM_SECTORES = 8
-TIEMPO_ENTRE_LLEGADAS = 13  # minutos
-DURACION_SIMULACION = 8 * 60 # minutos (1 hora)
 
 # Costos de estacionamiento por tipo de auto
 COSTO_POR_HORA = {
@@ -16,22 +14,6 @@ COSTO_POR_HORA = {
     'grande': 500,
     'utilitario': 1000
 }
-
-# Probabilidades de tipo de auto
-PROBABILIDADES_TIPO = {
-    'small': 0.45,
-    'grande': 0.25,
-    'utilitario': 0.30
-}
-
-# Probabilidades de tiempo de estacionamiento
-PROBABILIDADES_TIEMPO = {
-    60: 0.50,
-    120: 0.30,
-    180: 0.15,
-    240: 0.05
-}
-
 class Auto:
     _id_counter = 1
 
@@ -50,7 +32,12 @@ class Auto:
         return f"Auto {self.id} (Tipo: {self.tipo}, Estado: {self.estado})"
 
 class PlayaDeEstacionamiento:
-    def __init__(self):
+    def __init__(self,tiempo_simulacion, tiempo_entre_llegadas, cobro,probabilidades_tipo,probabilidades_tiempo):
+        self.tiempo_simulacion = tiempo_simulacion
+        self.tiempo_entre_llegadas = tiempo_entre_llegadas
+        self.cobro = cobro
+        self.probabilidades_tipo = probabilidades_tipo
+        self.probabilidades_tiempo = probabilidades_tiempo
         self.sectores = [None] * NUM_SECTORES
         self.cola_cobro = queue.Queue(maxsize=2)
         self.eventos = []
@@ -67,7 +54,7 @@ class PlayaDeEstacionamiento:
 
     def mostrar_vector_estado(self, tiempo, tipo_evento, auto, sector,datos_random):
 
-        porcentaje_utilizacion = sum(self.tiempo_uso_sectores) / (NUM_SECTORES * DURACION_SIMULACION) * 100
+        porcentaje_utilizacion = sum(self.tiempo_uso_sectores) / (NUM_SECTORES * self.tiempo_simulacion) * 100
         tiempo_promedio_espera_cobro = self.tiempo_espera_cobro_total / self.autos_atendidos if self.autos_atendidos > 0 else 0
         estado = {
             "tiempo": tiempo,
@@ -96,7 +83,7 @@ class PlayaDeEstacionamiento:
         if rnd_tipo == 1:
             rnd_tipo -= 0.001
         cumulative_probability = 0.0
-        for tipo, probabilidad in PROBABILIDADES_TIPO.items():
+        for tipo, probabilidad in self.probabilidades_tipo.items():
             cumulative_probability += probabilidad
             if rnd_tipo <= cumulative_probability:
                 return tipo, rnd_tipo
@@ -106,17 +93,17 @@ class PlayaDeEstacionamiento:
         if rnd_tiempo == 1:
             rnd_tiempo -= 0.001
         cumulative_probability = 0.0
-        for tiempo, probabilidad in PROBABILIDADES_TIEMPO.items():
+        for tiempo, probabilidad in self.probabilidades_tiempo.items():
             cumulative_probability += probabilidad
             if rnd_tiempo <= cumulative_probability:
                 return tiempo, rnd_tiempo   
     def proximo_auto(self):
-        rnd_prox = random.random()
+        rnd_prox = round(random.random(),4)
         if rnd_prox == 1:
             rnd_prox -= 0.001
-        tiempo_entre_llegada = int(round(-TIEMPO_ENTRE_LLEGADAS * math.log(1 - rnd_prox),0))
+        t_entre_llegada = int(round(-self.tiempo_entre_llegadas * math.log(1 - rnd_prox),0))
 
-        return rnd_prox, tiempo_entre_llegada
+        return rnd_prox, t_entre_llegada
 
 
 
@@ -173,14 +160,14 @@ class PlayaDeEstacionamiento:
 
         if not self.cola_cobro.empty():
             siguiente_auto = self.cola_cobro.get()
-            self.agregar_evento(tiempo + 2, 'fin_cobro', siguiente_auto, sector)
+            self.agregar_evento(tiempo + self.cobro, 'fin_cobro', siguiente_auto, sector)
 
     def ejecutar_simulacion(self):
         self.agregar_evento(0, 'llegada_auto')
 
         while self.eventos:
             tiempo, tipo_evento, auto, sector = self.eventos.pop(0)
-            if tiempo > DURACION_SIMULACION:
+            if tiempo > self.tiempo_simulacion:
                 self.mostrar_vector_estado(tiempo,tipo_evento,auto,sector,None)
                 break
             if tipo_evento == 'llegada_auto':
@@ -192,15 +179,42 @@ class PlayaDeEstacionamiento:
 
 # Datos de ejemplo
 def iniciar_simulacion():
-    playa = PlayaDeEstacionamiento()
+
+
+   
+    # Obtener valores de los campos de entrada  
+    tiempo_a_simular = int(tiempo_entry.get())
+    iteraciones = int(iteraciones_entry.get())
+    hora_inicio = int(hora_inicio_entry.get())
+
+    tiempo_entre_llegadas = int(tiempo_entre_llegadas_entry.get())
+    cobro = int(cobro_entry.get())
+
+    auto_chico = float(auto_chico_entry.get())
+    auto_grande = float(auto_grande_entry.get())
+    auto_utilitario = float(auto_utilitario_entry.get())
+
+    PROBABILIDADES_TIPO = {
+        'small': auto_chico,
+        'grande': auto_grande,
+        'utilitario': auto_utilitario
+    }
+
+    una_hora = float(una_hora_entry.get())
+    dos_horas = float(dos_horas_entry.get())
+    tres_horas = float(tres_horas_entry.get())
+    cuatro_horas = float(cuatro_horas_entry.get())
+    PROBABILIDADES_TIEMPO = {
+        60: una_hora,
+        120: dos_horas,
+        180: tres_horas,
+        240: cuatro_horas
+    }
+
+    playa = PlayaDeEstacionamiento(tiempo_a_simular,tiempo_entre_llegadas,cobro,PROBABILIDADES_TIPO,PROBABILIDADES_TIEMPO)
     playa.ejecutar_simulacion()
 
     data = playa.vector_estado
-    # Obtener valores de los campos de entrada
-    tiempo = tiempo_entry.get()
-    iteraciones = int(iteraciones_entry.get())
-    hora_inicio = hora_inicio_entry.get()
-
     # Limpiar la tabla
     for row in tree.get_children():
         tree.delete(row)
@@ -294,23 +308,80 @@ if __name__ == "__main__":
     input_frame.pack(pady=20)
 
     # Campo de entrada para el parámetro de tiempo
-    tk.Label(input_frame, text="Parámetro de Tiempo:").grid(row=0, column=0, padx=10, pady=5)
+    tk.Label(input_frame, text="Parámetro de Tiempo (minutos):").grid(row=0, column=0, padx=10, pady=5)
     tiempo_entry = tk.Entry(input_frame)
     tiempo_entry.grid(row=0, column=1, padx=10, pady=5)
+    tiempo_entry.insert(0,"60")
 
     # Campo de entrada para el parámetro de iteraciones
     tk.Label(input_frame, text="Iteraciones:").grid(row=1, column=0, padx=10, pady=5)
     iteraciones_entry = tk.Entry(input_frame)
     iteraciones_entry.grid(row=1, column=1, padx=10, pady=5)
+    iteraciones_entry.insert(0,"10")
 
     # Campo de entrada para la hora de inicio
-    tk.Label(input_frame, text="Hora de Inicio:").grid(row=2, column=0, padx=10, pady=5)
+    tk.Label(input_frame, text="Minutos de Inicio:").grid(row=2, column=0, padx=10, pady=5)
     hora_inicio_entry = tk.Entry(input_frame)
     hora_inicio_entry.grid(row=2, column=1, padx=10, pady=5)
+    hora_inicio_entry.insert(0,"0")
 
-    # Botón para iniciar la simulación
+    tk.Label(input_frame, text="Tiempo entre llegadas:").grid(row=3, column=0, padx=10, pady=5)
+    tiempo_entre_llegadas_entry = tk.Entry(input_frame)
+    tiempo_entre_llegadas_entry.grid(row=3, column=1, padx=10, pady=5)
+    tiempo_entre_llegadas_entry.insert(0,"13")
+
+    tk.Label(input_frame, text="Tiempo de cobro:").grid(row=4, column=0, padx=10, pady=5)
+    cobro_entry = tk.Entry(input_frame)
+    cobro_entry.grid(row=4, column=1, padx=10, pady=5)
+    cobro_entry.insert(0,"2")
+
+
+    # Tipo AUTOMOVIL
+   
+    tk.Label(input_frame, text="Probabilidades tamaño auto").grid(row=0, column=3, columnspan=2, padx=20, pady=5)
+
+    # Labels y Entries para los tipos de auto
+    tk.Label(input_frame, text="Auto chico:").grid(row=1, column=3, padx=10, pady=5, sticky=tk.E)
+    auto_chico_entry = tk.Entry(input_frame)
+    auto_chico_entry.grid(row=1, column=4, padx=10, pady=5)
+    auto_chico_entry.insert(0, "45")
+
+    tk.Label(input_frame, text="Auto grande:").grid(row=2, column=3, padx=10, pady=5, sticky=tk.E)
+    auto_grande_entry = tk.Entry(input_frame)
+    auto_grande_entry.grid(row=2, column=4, padx=10, pady=5)
+    auto_grande_entry.insert(0, "25")
+
+    tk.Label(input_frame, text="Auto utilitario:").grid(row=3, column=3, padx=10, pady=5, sticky=tk.E)
+    auto_utilitario_entry = tk.Entry(input_frame)
+    auto_utilitario_entry.grid(row=3, column=4, padx=10, pady=5)
+    auto_utilitario_entry.insert(0, "30")
+
+    # Tiempo Estacionamiento
+    tk.Label(input_frame, text="Probabilidades tiempo estacionamiento").grid(row=0, column=5, columnspan=2, padx=20, pady=5)
+
+    tk.Label(input_frame, text="1 hora:").grid(row=1, column=5, padx=10, pady=5)
+    una_hora_entry = tk.Entry(input_frame)
+    una_hora_entry.grid(row=1, column=6, padx=10, pady=5)
+    una_hora_entry.insert(0,"50")
+
+    tk.Label(input_frame, text="2 horas:").grid(row=2, column=5, padx=10, pady=5)
+    dos_horas_entry = tk.Entry(input_frame)
+    dos_horas_entry.grid(row=2, column=6, padx=10, pady=5)
+    dos_horas_entry.insert(0,"30")
+
+    tk.Label(input_frame, text="3 horas:").grid(row=3, column=5, padx=10, pady=5)
+    tres_horas_entry = tk.Entry(input_frame)
+    tres_horas_entry.grid(row=3, column=6, padx=10, pady=5)
+    tres_horas_entry.insert(0,"15")
+
+    tk.Label(input_frame, text="4 horas:").grid(row=4, column=5, padx=10, pady=5)
+    cuatro_horas_entry = tk.Entry(input_frame)
+    cuatro_horas_entry.grid(row=4, column=6, padx=10, pady=5)
+    cuatro_horas_entry.insert(0,"5")
+
+    # Botón para iniciar la simulación centrado
     start_button = tk.Button(input_frame, text="Iniciar Simulación", command=iniciar_simulacion)
-    start_button.grid(row=3, column=0, columnspan=2, pady=20)
+    start_button.grid(row=10, column=0, columnspan=7, pady=20, sticky="nsew")  # sticky para centrar el botón
 
     # Crear el treeview con scrollbars
     frame = tk.Frame(root)
